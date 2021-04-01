@@ -10,7 +10,6 @@ aws ec2 run-instances --image-id [IMAGE_ID] --count [AMOUNT_OF_INSTANCES] --inst
 -- TERMINATE INSTANCE --
 aws ec2 terminate-instances --instance-ids [INSTANCE_IDS]
 
-
 -- VIEW POLICIES AND GREP BY NAME --
 aws iam list-policies --scope AWS | grep (PolcyName Insert here)
 
@@ -23,6 +22,80 @@ aws iam detach-role-policy --role-name test-role --policy-arn arn:aws:iam::aws:p
 
 -- DELETE ROLE --
 aws iam delete-role --role-name test-role
+
+
+-- RDS --
+aws rds create-db-instance --db-name (define your own rds name) --db-instance-identifier (define your own identifier) --allocated-storage 20 --engine mysql --db-instance-class db.t2.micro --master-username admin --master-user-password (define your own password for your master username)
+
+-- UPDATE AND INSTALL SQL --
+sudo apt update -y && sudo apt install mysql-client-core-5.7 -y
+
+-- CONNECT TO SQL --
+mysql -h (your rds instance endpoint address) -P 3306 -u (your rds instance master username) -p -D flaskdb < db/CreateTable.sql
+
+-- DELETE DATABASE --
+aws rds delete-db-instance --db-instance-identifier (your db indentifier) --skip-final-snapshot
+
+
+
+-- AUTO SCALING GROUP CLI --
+aws ec2 create-security-group --description "QA Sample SG" --group-name QASGSAMPLE2020
+aws ec2 authorize-security-group-ingress --group-id (own security group id) --protocol tcp --port 22 --cidr (own ip address)
+aws autoscaling create-launch-configuration --launch-configuration-name qa-sample-launch-configuration --image-id ami-04137ed1a354f54c4 --instance-type t2.micro --key-name (your key name) --security-groups (your security group id)
+aws ec2 describe-vpcs
+aws ec2 describe-subnets --filters Name=vpc-id,Values=(your vpc id)
+aws autoscaling create-auto-scaling-group --auto-scaling-group-name qa-sample-asg --launch-configuration-name qa-sample-launch-configuration --min-size 1 --max-size 2 --vpc-zone-identifier "(comma separated list of subnet ids)"
+cat << EOF > config.json
+{
+  "TargetValue": 80.0,
+  "PredefinedMetricSpecification": 
+    {
+      "PredefinedMetricType": "ASGAverageCPUUtilization"
+    }
+}
+EOF
+aws autoscaling put-scaling-policy --policy-name QASampleCPUUtil --auto-scaling-group-name qa-sample-asg --policy-type TargetTrackingScaling --target-tracking-configuration file://config.json
+
+- testing-
+sudo apt update -y && sudo apt install stress -y
+sudo stress --cpu 8 --timeout 1200
+
+- deleting -
+aws autoscaling update-auto-scaling-group --auto-scaling-group-name qa-sample-asg --min-size 0 --max-size 0 --desired-capacity 0
+aws autoscaling delete-auto-scaling-group --auto-scaling-group-name qa-sample-asg
+aws autoscaling delete-launch-configuration --launch-configuration-name qa-sample-launch-configuration
+aws ec2 delete-security-group --group-name QASGSAMPLE2020
+
+
+-- VPCS --
+aws ec2 describe-vpcs --output text --query "Vpcs[].VpcId"
+
+--create--
+aws ec2 create-vpc --cidr-block 10.0.0.0/16
+
+--delete--
+aws ec2 delete-vpc --vpc-id [VPC_ID]
+
+--storing in a bash variable--
+vpc_id=$(aws ec2 create-vpc --cidr-block 10.0.0.0/16 --query Vpc.VpcId --output text)
+echo ${vpc_id}
+
+--SECURITY GROUPS--
+
+--create--
+aws ec2 create-security-group --group-name my-sg --description "My security group" --vpc-id vpc-1a2b3c4d
+
+--describe--
+aws ec2 describe-security-groups
+
+--allow incoming traffic--
+aws ec2 authorize-security-group-ingress --group-id <SG ID> --protocol tcp --port 443 --cidr 0.0.0.0/0
+
+--allow ssh from just my address--
+aws ec2 authorize-security-group-ingress --group-id sg-903004f8 --protocol tcp --port 22 --cidr $(curl https://checkip.amazonaws.com)/32
+
+--delete sg--
+aws ec2 delete-security-group --group-id <SG ID>
 
 
 
