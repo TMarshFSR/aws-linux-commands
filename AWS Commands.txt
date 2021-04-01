@@ -39,12 +39,12 @@ aws rds delete-db-instance --db-instance-identifier (your db indentifier) --skip
 
 
 -- AUTO SCALING GROUP CLI --
-aws ec2 create-security-group --description "QA Sample SG" --group-name QASGSAMPLE2020
+aws ec2 create-security-group --description "Sample SG" --group-name SGSAMPLE2020
 aws ec2 authorize-security-group-ingress --group-id (own security group id) --protocol tcp --port 22 --cidr (own ip address)
-aws autoscaling create-launch-configuration --launch-configuration-name qa-sample-launch-configuration --image-id ami-04137ed1a354f54c4 --instance-type t2.micro --key-name (your key name) --security-groups (your security group id)
+aws autoscaling create-launch-configuration --launch-configuration-name sample-launch-configuration --image-id ami-04137ed1a354f54c4 --instance-type t2.micro --key-name (your key name) --security-groups (your security group id)
 aws ec2 describe-vpcs
 aws ec2 describe-subnets --filters Name=vpc-id,Values=(your vpc id)
-aws autoscaling create-auto-scaling-group --auto-scaling-group-name qa-sample-asg --launch-configuration-name qa-sample-launch-configuration --min-size 1 --max-size 2 --vpc-zone-identifier "(comma separated list of subnet ids)"
+aws autoscaling create-auto-scaling-group --auto-scaling-group-name sample-asg --launch-configuration-name sample-launch-configuration --min-size 1 --max-size 2 --vpc-zone-identifier "(comma separated list of subnet ids)"
 cat << EOF > config.json
 {
   "TargetValue": 80.0,
@@ -54,17 +54,17 @@ cat << EOF > config.json
     }
 }
 EOF
-aws autoscaling put-scaling-policy --policy-name QASampleCPUUtil --auto-scaling-group-name qa-sample-asg --policy-type TargetTrackingScaling --target-tracking-configuration file://config.json
+aws autoscaling put-scaling-policy --policy-name SampleCPUUtil --auto-scaling-group-name sample-asg --policy-type TargetTrackingScaling --target-tracking-configuration file://config.json
 
 - testing-
 sudo apt update -y && sudo apt install stress -y
 sudo stress --cpu 8 --timeout 1200
 
 - deleting -
-aws autoscaling update-auto-scaling-group --auto-scaling-group-name qa-sample-asg --min-size 0 --max-size 0 --desired-capacity 0
-aws autoscaling delete-auto-scaling-group --auto-scaling-group-name qa-sample-asg
-aws autoscaling delete-launch-configuration --launch-configuration-name qa-sample-launch-configuration
-aws ec2 delete-security-group --group-name QASGSAMPLE2020
+aws autoscaling update-auto-scaling-group --auto-scaling-group-name sample-asg --min-size 0 --max-size 0 --desired-capacity 0
+aws autoscaling delete-auto-scaling-group --auto-scaling-group-name sample-asg
+aws autoscaling delete-launch-configuration --launch-configuration-name sample-launch-configuration
+aws ec2 delete-security-group --group-name SGSAMPLE2020
 
 
 -- VPCS --
