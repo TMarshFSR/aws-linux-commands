@@ -1,0 +1,33 @@
+-- DESCRIBE INSTANCES BRIEF --
+aws ec2 describe-instances --output text --query 'Reservations[*].Instances[*].[InstanceId,ImageId,State.Name,InstanceType,PrivateIpAddress,PublicDnsName,Tags]'
+
+-- START INSTANCE --
+aws ec2 start-instances --instance-ids- <INSTANCEID>
+
+-- RUN NEW INSTANCE --
+aws ec2 run-instances --image-id [IMAGE_ID] --count [AMOUNT_OF_INSTANCES] --instance-type [MACHINE_SIZE] --key-name [KEY_PAIR_NAME]
+
+-- TERMINATE INSTANCE --
+aws ec2 terminate-instances --instance-ids [INSTANCE_IDS]
+
+
+-- VIEW POLICIES AND GREP BY NAME --
+aws iam list-policies --scope AWS | grep (PolcyName Insert here)
+
+-- CREATES A ROLE USING JSON POLICY DOCUMENT --
+aws iam create-role --role-name test-role --assume-role-policy-document file://
+assume-policy.json
+
+-- DETACH ROLE --
+aws iam detach-role-policy --role-name test-role --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
+
+-- DELETE ROLE --
+aws iam delete-role --role-name test-role
+
+
+
+-- INSTALL PYTHON AMAZON LINUX 2 --
+yum -y update
+yum -y insyall python3
+yum -y install python3-pip
+pip3 install --upgrade pip
